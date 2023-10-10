@@ -1,0 +1,40 @@
+{
+    "apiKey": "xxxxxxxxxxxxxxxx",
+    "spaceId": "abcdefghijk\\spacename",
+    "mapId": "mapname",
+    "home": {
+        "x": 54,
+        "y": 34
+    },
+    "npcData": {
+        "connected": true,
+        "currentlyEquippedWearables": {
+            "skin": "",
+            "hair": "",
+            "facial_hair": "",
+            "top": "",
+            "bottom": "",
+            "shoes": "",
+            "hat": "",
+            "glasses": "",
+            "other": "4DaUyq4tgWFhmx3tzMZI",
+            "costume": "",
+            "mobility": "",
+            "jacket": ""
+        },
+        "emojiStatus": "🤖",
+        "map": "blank",
+        "name": "NPC",
+        "textStatus": "hello",
+        "status": "Available",
+        "id": "xxxxxxxxxxxxxxxx",
+        "ghost": 0,
+        "away": false,
+        "lastInputId": 0,
+        "isSignedIn": true,
+        "speedModifier": 1
+    },
+    "modules": [
+        "example"
+    ]
+}

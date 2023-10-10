@@ -1,0 +1,28 @@
+{
+  "name": "opengatherai",
+  "version": "1.0.0",
+  "description": "An Open-Source NPC agent for Gather.town spaces",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxpelic/OpenGatherAI.git"
+  },
+  "keywords": [
+    "gather.town"
+  ],
+  "author": "Maxwell Pelic",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maxpelic/OpenGatherAI/issues"
+  },
+  "homepage": "https://github.com/maxpelic/OpenGatherAI#readme",
+  "dependencies": {
+    "@gathertown/gather-game-client": "^43.0.1",
+    "colors": "^1.4.0",
+    "isomorphic-ws": "^5.0.0",
+    "ws": "^8.14.2"
+  }
+}
