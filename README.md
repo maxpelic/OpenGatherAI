@@ -3,6 +3,8 @@
 
 *Open Gather AI* is a project to build a customizable, open-source NPC that can be added to any gather town map. The NPC can have many different options enabled for different features, and is built in a way that it's easy to create new features for it. Built using the [Gather Town API](https://gathertown.notion.site/Gather-Websocket-API-bf2d5d4526db412590c3579c36141063)
 
+You're free to use this NPC code and modules in any gather space you own that people can freely access. If you want to charge to host this code or otherwise profit from this project you'll need to get permission from the authors of any modules you plan to use. However, feel free to use the base code without permission.
+
 ## Installation
 
 1. Clone this repository
