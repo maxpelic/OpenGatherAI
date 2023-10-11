@@ -1,6 +1,7 @@
 const { Game } = require("@gathertown/gather-game-client");
 global.WebSocket = require("isomorphic-ws");
 const fs = require("fs");
+const easystarjs = require("easystarjs");
 require('colors').enable();
 
 class NPC {
@@ -9,6 +10,7 @@ class NPC {
     loadedModules = [];
     awaitingPlayerChats = {};
     permissions = null;
+    config = null;
 
     commands = {
         cancel: {
@@ -33,10 +35,10 @@ class NPC {
 
         //update the NPC object with config options and defaults
         config.npcData.isNpc = true;
-        config.npcData.x = config.npcData.x || config.home.x || 0;
-        config.npcData.y = config.npcData.y || config.home.y || 0;
         config.npcData.map = config.npcData.map || config.mapId;
         config.npcData.isSignedIn = config.npcData.isSignedIn || true;
+
+        this.config = config;
 
         //register permission commands
         this.registerCommand("op", "Give a player OP permissions (allow them to execute any command)", "op", async (senderId) => {
@@ -160,30 +162,31 @@ class NPC {
 
                 console.log(("\nConnected to Gather as " + config.npcData.name + "!\n").green);
 
-                //load modules
-                modules.forEach((module) => {
-                    this.loadModule(module);
-                });
-
-                //list which modules are loaded (options are any folder in the modules folder)
-                const possibleModules = fs.readdirSync("./modules").filter((file) => {
-                    return fs.statSync("./modules/" + file).isDirectory();
-                });
-                console.log("\n\nLoaded modules: ");
-                for (let i = 0; i < possibleModules.length; i++) {
-                    const module = possibleModules[i];
-                    if (!this.loadedModules.includes(module)) {
-                        if(modules.includes(module)) {
-                            console.log(module.red + " (failed to load)");
-                        } else {
-                            console.log(module.strikethrough);
-                        }
-                    } else {
-                        console.log(module.green);
-                    }
-                }
             }
         });
+        
+        //load modules
+        modules.forEach((module) => {
+            this.loadModule(module);
+        });
+
+        //list which modules are loaded (options are any folder in the modules folder)
+        const possibleModules = fs.readdirSync("./modules").filter((file) => {
+            return fs.statSync("./modules/" + file).isDirectory();
+        });
+        console.log("\n\nLoaded modules: ");
+        for (let i = 0; i < possibleModules.length; i++) {
+            const module = possibleModules[i];
+            if (!this.loadedModules.includes(module)) {
+                if(modules.includes(module)) {
+                    console.log(module.red + " (failed to load)");
+                } else {
+                    console.log(module.strikethrough);
+                }
+            } else {
+                console.log(module.green);
+            }
+        }
 
         //listen for messages
         this.game.subscribeToEvent("playerChats", data => {
@@ -200,6 +203,11 @@ class NPC {
                 this.runAction(action.gameFunction, action.params);
             }
         }, 100);
+
+        //movement
+        setInterval(() => {
+            this.move();
+        }, 200);
     };
 
     //prevent rate limiting with an action queue
@@ -314,7 +322,6 @@ class NPC {
     playerSelection = async (message, targetId, includePlayers) => {
         message = message || "Please select a player:";
         const playerOptions = Object.keys(this.game.players).filter(playerId => {
-            if(playerId === targetId) return false;
             if(!includePlayers) return true;
             return includePlayers.includes(playerId);
         }).map((playerId) => {
@@ -339,6 +346,188 @@ class NPC {
         }
 
         return selectedPlayer.value;
+    };
+
+    //movement
+    //the basic idea with movement is that you can queue target locations or players asynchonously, and the NPC will move to them in order and fulfill the promise when it reaches it's destination
+    //this allows you to queue up multiple movements and have them happen in order, making it easy for modules to move the NPC around without conflicts
+
+    movementQueue = [];
+
+    //move to a location
+    moveToLocation = async (x, y, map) => {
+        map = map || this.config.mapId;
+        return new Promise((resolve) => {
+            this.movementQueue.push({ x, y, map, resolve });
+        });
+    };
+
+    //move to player
+    moveToPlayer = async (playerId) => {
+        return new Promise((resolve) => {
+            this.movementQueue.push({ playerId, resolve });
+        });
+    };
+
+    //make a move
+    move = async () => {
+
+        try {
+            this.game.getMyPlayer();
+        } catch (e) {
+            //game has probably not loaded yet
+            return;
+        }
+
+        let currentTarget = this.movementQueue[0];
+
+        if (!currentTarget) {
+            currentTarget = this.config.home;
+            currentTarget.map = this.config.mapId;
+        }
+
+        //check if player or location
+        if(currentTarget.playerId){
+            if(currentTarget.playerId === this.game.getMyPlayer().id) {
+                //complete movement
+                this.movementQueue.shift();
+                currentTarget.resolve && currentTarget.resolve(true);
+                return;
+            }
+
+            currentTarget.x = this.game.players[currentTarget.playerId].x;
+            currentTarget.y = this.game.players[currentTarget.playerId].y;
+            currentTarget.map = this.game.players[currentTarget.playerId].map;
+
+            //check if the NPC is within 1 square of the player
+            if(Math.abs(this.game.getMyPlayer().x - currentTarget.x) <= 1 && Math.abs(this.game.getMyPlayer().y - currentTarget.y) <= 1 && this.game.getMyPlayer().map === currentTarget.map) {
+                //complete movement
+                this.movementQueue.shift();
+                currentTarget.resolve && currentTarget.resolve(true);
+                return;
+            }
+        }
+
+        //check if NPC is on the current target
+        if (this.game.getMyPlayer().x === currentTarget.x && this.game.getMyPlayer().y === currentTarget.y && this.game.getMyPlayer().map === currentTarget.map) {
+            //complete movement
+            this.movementQueue.shift();
+            currentTarget.resolve && currentTarget.resolve(true);
+            console.log(this.game.getMyPlayer().x, currentTarget.x, this.game.getMyPlayer().y, currentTarget.y, this.game.getMyPlayer().map, currentTarget.map);
+            return;
+        }
+
+        let foundPortal = false; //this will be used again later
+
+        //if target is in a different map, try to find a portal to that map
+        if (currentTarget.map !== this.game.getMyPlayer().map) {
+            const portals = this.game.completeMaps[this.game.getMyPlayer().map].portals;
+
+            for(const portal of portals) {
+                if(portal.targetMap === currentTarget.map) {
+                    foundPortal = true;
+
+                    //set target destination to portal
+                    currentTarget = {
+                        x: portal.x,
+                        y: portal.y,
+                        map: this.game.getMyPlayer().map
+                    };
+
+                    //check if NPC is on the current target
+                    if (this.game.getMyPlayer().x === currentTarget.x && this.game.getMyPlayer().y === currentTarget.y && this.game.getMyPlayer().map === currentTarget.map) {
+                        //move through portal
+                        this.queueAction("teleport", portal.targetMap, portal.targetX, portal.targetY);
+                        console.log(this.game.getMyPlayer().x, currentTarget.x, this.game.getMyPlayer().y, currentTarget.y, this.game.getMyPlayer().map, currentTarget.map);
+                        return;
+                    }
+
+                    break;
+                }
+            }
+
+            if(!foundPortal) {
+                //just teleport to the other map
+                this.queueAction("teleport", currentTarget.map, this.game.getMyPlayer().x, this.game.getMyPlayer().y);
+                return;
+            }
+        }
+
+        //find path to target
+        const easystar = new easystarjs.js();
+
+        //build map
+        const { collisions, nooks } = this.game.completeMaps[currentTarget.map];
+        const map_width = this.game.completeMaps[currentTarget.map].dimensions[0];
+        const map_height = this.game.completeMaps[currentTarget.map].dimensions[1];
+
+        const grid = [];
+        for (let y = 0; y < map_height; y++) {
+            const row = [];
+            for (let x = 0; x < map_width; x++) {
+                if(!collisions[y] || !collisions[y][x]) {
+                    row.push(0);
+                } else {
+                    row.push(1);
+                }
+            }
+            grid.push(row);
+        }
+
+        //try to avoid nooks, completely avoid restricted nooks
+        for (const id in nooks) {
+            const nook = nooks[id];
+            for(let i = 0; i < nook.nookCoords.coords.length; i++){
+                const { x, y } = nook.nookCoords.coords[i];
+                grid[y][x] = 2;
+
+                if(nook.restricted && !nook.allowedUsers.users.includes(this.game.getMyPlayer().id)){
+                    grid[y][x] = 3;
+                }
+            }
+        }
+
+        easystar.setGrid(grid);
+        easystar.setAcceptableTiles([0, 1, 2]);
+        easystar.setTileCost(1, 300); //avoid walls
+        easystar.setTileCost(2, 5); //avoid nooks
+
+        try{
+            easystar.findPath(this.game.getMyPlayer().x, this.game.getMyPlayer().y, currentTarget.x, currentTarget.y, (path) => {
+                if (!path) {
+                    //no path found
+                    //if it's a portal we're trying to reach, just teleport
+                    if(foundPortal) {
+                        this.queueAction("teleport", currentTarget.map, this.game.getMyPlayer().x, this.game.getMyPlayer().y);
+                        return;
+                    }
+                    this.movementQueue.shift();
+                    currentTarget.resolve && currentTarget.resolve(false);
+                    return;
+                }
+
+                //move to next square in path
+                const nextSquare = path[1];
+                
+                //check which direction to face
+                const direction = 
+                    this.game.getMyPlayer().x > nextSquare.x ? 5 : //left
+                    this.game.getMyPlayer().x < nextSquare.x ? 7 : //right
+                    this.game.getMyPlayer().y > nextSquare.y ? 3 : //up
+                    1; //down
+
+                //move by teleporting to ignore walls and portals we don't intend to use
+                this.queueAction("teleport", currentTarget.map, nextSquare.x, nextSquare.y, this.game.getMyPlayer().id, direction);
+
+                return;
+            });
+        } catch (e) {
+            console.error(e);
+            this.movementQueue.shift();
+            currentTarget.resolve && currentTarget.resolve(false);
+            return;
+        }
+        easystar.calculate();
     };
 
 };

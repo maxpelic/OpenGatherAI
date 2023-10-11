@@ -22,6 +22,7 @@
   "dependencies": {
     "@gathertown/gather-game-client": "^43.0.1",
     "colors": "^1.4.0",
+    "easystarjs": "^0.4.4",
     "isomorphic-ws": "^5.0.0",
     "ws": "^8.14.2"
   }
