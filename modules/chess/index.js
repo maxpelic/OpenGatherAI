@@ -53,11 +53,25 @@ module.exports = {
     init: (npc) => {
         let chessX, chessY, chessMap, chess, selectedPiece;
         //register chess command
+
+        const loadFromFile = () => {
+
+            //load from ./chess.json
+            const fs = require("fs");
+            const chessJson = JSON.parse(fs.readFileSync("./chess.json"));
+            chess = new Chess();
+            chess.load(chessJson.fen);
+            chessX = chessJson.x;
+            chessY = chessJson.y;
+            chessMap = chessJson.map;
+            selectedPiece = null;
+        };
+
         npc.registerCommand("chess <?fen>", "Move/reset the chess board to your position", "op", (playerId, ...fen) => {
             //reset game client
             chess = new Chess();
 
-            if(pgn.length){
+            if(fen.length){
                 chess.load(fen.join(" "));
             }
 
@@ -75,6 +89,13 @@ module.exports = {
             npc.sendMessage(chess.fen(), playerId);
         });
 
+        npc.registerCommand("turn", "Check whose turn it is", "all", (playerId) => {
+            if(!chess){
+                loadFromFile();
+            }
+            npc.sendMessage(chess.turn() === 'b' ? "Black" : "White", playerId);
+        });
+
         //listen to interactions with squares
         npc.game.subscribeToEvent("playerInteractsWithObject", async (data, context) => {
             const key = data.playerInteractsWithObject.key;
@@ -86,15 +107,7 @@ module.exports = {
 
             if(!chess){
                 console.log("loading from file");
-                //load from ./chess.json
-                const fs = require("fs");
-                const chessJson = JSON.parse(fs.readFileSync("./chess.json"));
-                chess = new Chess();
-                chess.load(chessJson.fen);
-                chessX = chessJson.x;
-                chessY = chessJson.y;
-                chessMap = chessJson.map;
-                selectedPiece = null;
+                loadFromFile();
             }
 
             //check if there's a piece on the square
