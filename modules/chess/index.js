@@ -53,12 +53,12 @@ module.exports = {
     init: (npc) => {
         let chessX, chessY, chessMap, chess, selectedPiece;
         //register chess command
-        npc.registerCommand("chess <?pgn>", "Move/reset the chess board to your position", "op", (playerId, ...pgn) => {
+        npc.registerCommand("chess <?fen>", "Move/reset the chess board to your position", "op", (playerId, ...fen) => {
             //reset game client
             chess = new Chess();
 
             if(pgn.length){
-                chess.loadPgn(pgn.join(" "));
+                chess.load(fen.join(" "));
             }
 
             chessX = npc.game.players[playerId].x;
@@ -71,23 +71,35 @@ module.exports = {
 
         });
 
+        npc.registerCommand("fen", "Get the current FEN of the chess board", "all", (playerId) => {
+            npc.sendMessage(chess.fen(), playerId);
+        });
+
         //listen to interactions with squares
         npc.game.subscribeToEvent("playerInteractsWithObject", async (data, context) => {
             const key = data.playerInteractsWithObject.key;
-            const object = npc.game.getObjectByKey(chessMap, key);
+            const object = npc.game.getObjectByKey(data.playerInteractsWithObject.mapId, key);
 
             if(!object || !object._tags.includes("npcchess")){
                 return;
             }
 
+            if(!chess){
+                console.log("loading from file");
+                //load from ./chess.json
+                const fs = require("fs");
+                const chessJson = JSON.parse(fs.readFileSync("./chess.json"));
+                chess = new Chess();
+                chess.load(chessJson.fen);
+                chessX = chessJson.x;
+                chessY = chessJson.y;
+                chessMap = chessJson.map;
+                selectedPiece = null;
+            }
+
             //check if there's a piece on the square
             const pieceX = object.x - chessX;
             const pieceY = object.y - chessY;
-
-            if(!chess){
-                console.log("no chess game");
-                return;
-            }
 
             const squareIndex = coordsToSquare(pieceX, pieceY);
 
@@ -135,6 +147,15 @@ module.exports = {
         });
 
         const updateBoard = (board) => {
+            //save chess state in ./chess.json
+            const fs = require("fs");
+            fs.writeFileSync("./chess.json", JSON.stringify({
+                "fen":chess.fen(),
+                "map":chessMap,
+                "x":chessX,
+                "y":chessY
+            }));
+
             const usedObjects = [];
 
             const selectedTiles = [];
