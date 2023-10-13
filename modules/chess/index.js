@@ -78,6 +78,7 @@ module.exports = {
             chessX = npc.game.players[playerId].x;
             chessY = npc.game.players[playerId].y;
             chessMap = npc.game.players[playerId].map;
+            selectedPiece = null;
 
             //reset the chess board
 
@@ -171,11 +172,46 @@ module.exports = {
 
             const usedObjects = [];
 
-            const selectedTiles = [];
+            let selectedTiles = [];
             if(selectedPiece){
                 const moves = chess.moves({ square: selectedPiece, verbose: true });
                 for(const move of moves){
                     selectedTiles.push(move.to);
+                }
+                if(selectedTiles.length){
+                    selectedTiles.push(selectedPiece);
+                }
+            }
+
+            if(chess.isGameOver()){
+                //show the winner, if it's a winning state
+                if(chess.isCheckmate()){
+                    if(chess.turn() === "b"){
+                        selectedTiles = [
+                            "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+                            "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+                            "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+                            "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4"
+                        ];
+                    } else {
+                        selectedTiles = [
+                            "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+                            "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+                            "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+                            "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"
+                        ];
+                    }
+                } else {
+                    selectedTiles = [
+                        "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+                        "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+                        "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+                        "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+                        "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+                        "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+                        "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+                        "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8"
+                    ];
                 }
             }
 
