@@ -395,6 +395,13 @@ class NPC {
                 return;
             }
 
+            if(!this.game.players[currentTarget.playerId]) {
+                //player not found
+                this.movementQueue.shift();
+                currentTarget.resolve && currentTarget.resolve(false);
+                return;
+            }
+
             currentTarget.x = this.game.players[currentTarget.playerId].x;
             currentTarget.y = this.game.players[currentTarget.playerId].y;
             currentTarget.map = this.game.players[currentTarget.playerId].map;

@@ -45,7 +45,8 @@ const makeSprite = (normal, x, y, zindex, interactable) => {
         "width": 1,
         "height": 1,
         "id": "chess_piece_" + Math.random().toString(36).substring(7),
-        "zIndex": zindex
+        "zIndex": zindex,
+        "offsetY": interactable ? 0 : -8
     };
 }
 
