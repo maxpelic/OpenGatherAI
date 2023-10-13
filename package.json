@@ -21,6 +21,7 @@
   "homepage": "https://github.com/maxpelic/OpenGatherAI#readme",
   "dependencies": {
     "@gathertown/gather-game-client": "^43.0.1",
+    "chess.js": "^1.0.0-beta.6",
     "colors": "^1.4.0",
     "easystarjs": "^0.4.4",
     "isomorphic-ws": "^5.0.0",

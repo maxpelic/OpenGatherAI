@@ -413,7 +413,6 @@ class NPC {
             //complete movement
             this.movementQueue.shift();
             currentTarget.resolve && currentTarget.resolve(true);
-            console.log(this.game.getMyPlayer().x, currentTarget.x, this.game.getMyPlayer().y, currentTarget.y, this.game.getMyPlayer().map, currentTarget.map);
             return;
         }
 
@@ -438,7 +437,6 @@ class NPC {
                     if (this.game.getMyPlayer().x === currentTarget.x && this.game.getMyPlayer().y === currentTarget.y && this.game.getMyPlayer().map === currentTarget.map) {
                         //move through portal
                         this.queueAction("teleport", portal.targetMap, portal.targetX, portal.targetY);
-                        console.log(this.game.getMyPlayer().x, currentTarget.x, this.game.getMyPlayer().y, currentTarget.y, this.game.getMyPlayer().map, currentTarget.map);
                         return;
                     }
 
