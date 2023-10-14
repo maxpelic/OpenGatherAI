@@ -1,25 +1,10 @@
 const { Chess } = require("chess.js");
 
-const pieceMappings = {
-    "B": "iUhDbE8eMcjRXaWgAOFNBc",
-    "b": "3wSKKVzBR1U1SWJ3yOlma1",
-    "K": "NlBmzlu33L35pvpQEo5qDN",
-    "k": "HEDCqMsc9cCFkjcHe6hdpO",
-    "N": "orsPk5hsWdzG5DQB7zOZ5E",
-    "n": "0kMd3XPSYZ96LXzh2U0MOd",
-    "P": "fjZdbsaWoCGzHcBkS85Dx4",
-    "p": "4ZuHC21ZPAtAe6FOeIvhjT",
-    "Q": "DmZbpieZS9hJHbp3dexBsj",
-    "q": "gNf5wJn8g19XsotDvP3oKR",
-    "R": "dhoO2f3auJlqEk2AaORFIM",
-    "r": "WuEeblCwvmr6j71rEL81Lf"
-};
-
 const getChessPieceNormal = (piece, color) => {
     if(color === "w"){
         piece = piece.toUpperCase();
     }
-    return "https://cdn.gather.town/storage.googleapis.com/gather-town.appspot.com/uploads/Kb0O8sR6Z4CBWOrQ/" + pieceMappings[piece];
+    return "https://gatherfile.com/chess/" + pieceMappings[piece] + ".png";
 };
 
 const CHESS_SQUARE_LIGHT_NORMAL = "https://gatherfile.com/chess/chessLight.png";
