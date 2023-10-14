@@ -6,6 +6,7 @@ require('colors').enable();
 
 class NPC {
     actionQueue = [];
+    actionQueueMessageSent = false;
     game = null;
     loadedModules = [];
     awaitingPlayerChats = {};
@@ -213,6 +214,10 @@ class NPC {
     //prevent rate limiting with an action queue
     queueAction = (gameFunction, ...params) => {
         this.actionQueue.push({ gameFunction, params });
+        if(this.actionQueue.length >= 10 && (!this.actionQueueMessageSent || new Date().getTime() - this.actionQueueMessageSent > 1000 * 30)) {
+            console.log(("Action queue is filling up (" + this.actionQueue.length + " actions queued).").yellow);
+            this.actionQueueMessageSent = new Date().getTime();
+        }
     };
     
     runAction = (gameFunction, params) => {

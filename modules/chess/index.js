@@ -7,11 +7,13 @@ const getChessPieceNormal = (piece, color) => {
     return "https://gatherfile.com/chess/" + piece + ".png";
 };
 
-const CHESS_SQUARE_LIGHT_NORMAL = "https://gatherfile.com/chess/chessLight.png";
+const CHESS_SQUARE_LIGHT_NORMAL = "https://gatherfile.com/chess/light.png";
 
-const CHESS_SQUARE_DARK_NORMAL = "https://gatherfile.com/chess/chessDark.png";
+const CHESS_SQUARE_DARK_NORMAL = "https://gatherfile.com/chess/dark.png";
 
-const CHESS_SQUARE_SELECTED_NORMAL = "https://gatherfile.com/chess/chessSelected.png";
+const CHESS_SQUARE_LIGHT_SELECTED_NORMAL = "https://gatherfile.com/chess/light_selected.png";
+
+const CHESS_SQUARE_DARK_SELECTED_NORMAL = "https://gatherfile.com/chess/dark_selected.png";
 
 const coordsToSquare = (x, y) => { 
     return 'abcdefgh'[x] + (8 - y);
@@ -213,7 +215,7 @@ module.exports = {
                         squareNormal = CHESS_SQUARE_DARK_NORMAL;
                     }
                     if(selectedTiles.includes(coordsToSquare(col, row))){
-                        squareNormal = CHESS_SQUARE_SELECTED_NORMAL;
+                        squareNormal = squareColor === "dark" ? CHESS_SQUARE_DARK_SELECTED_NORMAL : CHESS_SQUARE_LIGHT_SELECTED_NORMAL;
                     }
 
                     //check if square is alreay in the map
