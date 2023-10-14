@@ -4,7 +4,7 @@ const getChessPieceNormal = (piece, color) => {
     if(color === "w"){
         piece = piece.toUpperCase();
     }
-    return "https://gatherfile.com/chess/" + pieceMappings[piece] + ".png";
+    return "https://gatherfile.com/chess/" + piece + ".png";
 };
 
 const CHESS_SQUARE_LIGHT_NORMAL = "https://gatherfile.com/chess/chessLight.png";
