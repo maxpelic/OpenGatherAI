@@ -203,7 +203,7 @@ class NPC {
                 const action = this.actionQueue.shift();
                 this.runAction(action.gameFunction, action.params);
             }
-        }, 100);
+        }, 60);
 
         //movement
         setInterval(() => {
