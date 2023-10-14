@@ -199,10 +199,7 @@ class NPC {
 
         //action queue
         setInterval(() => {
-            if (this.actionQueue.length > 0) {
-                const action = this.actionQueue.shift();
-                this.runAction(action.gameFunction, action.params);
-            }
+            this.runNextAction();
         }, 60);
 
         //movement
@@ -212,12 +209,24 @@ class NPC {
     };
 
     //prevent rate limiting with an action queue
-    queueAction = (gameFunction, ...params) => {
-        this.actionQueue.push({ gameFunction, params });
+    queueAction = (gameFunction, params, ifFunction) => {
+        //gameFunction = name of the function to call on the game object
+        //params = array of params to pass to the function
+        //ifFunction = optional function to call to check if the action should be run (useful for deleting objects)
+        this.actionQueue.push({ gameFunction, params, ifFunction });
         if(this.actionQueue.length >= 10 && (!this.actionQueueMessageSent || new Date().getTime() - this.actionQueueMessageSent > 1000 * 30)) {
             console.log(("Action queue is filling up (" + this.actionQueue.length + " actions queued).").yellow);
             this.actionQueueMessageSent = new Date().getTime();
         }
+    };
+
+    runNextAction = () => {
+        if(!this.actionQueue.length) return;
+        const action = this.actionQueue.shift();
+        if(action.ifFunction && !action.ifFunction()) {
+            return this.runNextAction();
+        }
+        this.runAction(action.gameFunction, action.params);
     };
     
     runAction = (gameFunction, params) => {
@@ -244,7 +253,7 @@ class NPC {
 
     //send a message to a user
     sendMessage = (message, targetId) => {
-        this.queueAction("chat", targetId, [], this.game.players[targetId].map, {contents: message});
+        this.queueAction("chat", [targetId, [], this.game.players[targetId].map, {contents: message}]);
     };
 
     //wait for a user to respond to a message
@@ -448,7 +457,7 @@ class NPC {
                     //check if NPC is on the current target
                     if (this.game.getMyPlayer().x === currentTarget.x && this.game.getMyPlayer().y === currentTarget.y && this.game.getMyPlayer().map === currentTarget.map) {
                         //move through portal
-                        this.queueAction("teleport", portal.targetMap, portal.targetX, portal.targetY);
+                        this.queueAction("teleport", [portal.targetMap, portal.targetX, portal.targetY]);
                         return;
                     }
 
@@ -458,7 +467,7 @@ class NPC {
 
             if(!foundPortal) {
                 //just teleport to the other map
-                this.queueAction("teleport", currentTarget.map, this.game.getMyPlayer().x, this.game.getMyPlayer().y);
+                this.queueAction("teleport", [currentTarget.map, this.game.getMyPlayer().x, this.game.getMyPlayer().y]);
                 return;
             }
         }
@@ -508,7 +517,7 @@ class NPC {
                     //no path found
                     //if it's a portal we're trying to reach, just teleport
                     if(foundPortal) {
-                        this.queueAction("teleport", currentTarget.map, this.game.getMyPlayer().x, this.game.getMyPlayer().y);
+                        this.queueAction("teleport", [currentTarget.map, this.game.getMyPlayer().x, this.game.getMyPlayer().y]);
                         return;
                     }
                     this.movementQueue.shift();
@@ -527,7 +536,7 @@ class NPC {
                     1; //down
 
                 //move by teleporting to ignore walls and portals we don't intend to use
-                this.queueAction("teleport", currentTarget.map, nextSquare.x, nextSquare.y, this.game.getMyPlayer().id, direction);
+                this.queueAction("teleport", [currentTarget.map, nextSquare.x, nextSquare.y, this.game.getMyPlayer().id, direction]);
 
                 return;
             });

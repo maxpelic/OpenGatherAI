@@ -120,7 +120,7 @@ module.exports = {
                             if(!playerFound) continue;
                             object.x = npc.game.getMyPlayer().x;
                             object.y = npc.game.getMyPlayer().y;
-                            npc.queueAction("addObject", npc.game.players[playerId].map, object);
+                            npc.queueAction("addObject", [npc.game.players[playerId].map, object]);
                             message.recievedBy.push(playerId);
                             //save ./mail.json
                             let currentMail = JSON.parse(fs.readFileSync('./mail.json'));
@@ -137,7 +137,7 @@ module.exports = {
                         if (playerFound) {
                             object.x = npc.game.getMyPlayer().x;
                             object.y = npc.game.getMyPlayer().y;
-                            npc.queueAction("addObject", targetPlayer.map, object);
+                            npc.queueAction("addObject", [targetPlayer.map, object]);
                             deleteMail(message.fromPlayerId, message.targetPlayerId, message.message);
                         }
                     }
@@ -161,7 +161,7 @@ module.exports = {
             
             if(object._name !== "Mail" || object.customState !== "for " + playerId) return;
             object.customState += " (opened)";
-            npc.queueAction("updateObject", npc.game.players[playerId].map, key, object);
+            npc.queueAction("updateObject", [npc.game.players[playerId].map, key, object]);
         });
 
         //listen to movement events and remove read messages by someone who moved
@@ -171,7 +171,7 @@ module.exports = {
             const mails = npc.game.filterObjectsInMap(npc.game.players[playerId].map, o => o._name === "Mail" && o.customState === "for " + playerId + " (opened)");
             //remove mail objects
             for(mail of mails) {
-                npc.queueAction("deleteObject", npc.game.players[playerId].map, mail.id);
+                npc.queueAction("deleteObject", [npc.game.players[playerId].map, mail.id]);
             }
         });
     }

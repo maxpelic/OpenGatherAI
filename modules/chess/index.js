@@ -225,7 +225,7 @@ module.exports = {
 
                     if(!squareExists.length){
                         //add square
-                        npc.queueAction("addObject", chessMap, makeSprite(squareNormal, squareX, squareY, 1000, true));
+                        npc.queueAction("addObject", [chessMap, makeSprite(squareNormal, squareX, squareY, 1000, true)]);
                     } else {
                         usedObjects.push(squareExists[0].id);
                     }
@@ -240,7 +240,7 @@ module.exports = {
 
                         if(!pieceExists.length){
                             //add piece
-                            npc.queueAction("addObject", chessMap, makeSprite(pieceNormal, squareX, squareY, 2000));
+                            npc.queueAction("addObject", [chessMap, makeSprite(pieceNormal, squareX, squareY, 2000)]);
                         } else {
                             usedObjects.push(pieceExists[0].id);
                         }
@@ -255,7 +255,9 @@ module.exports = {
 
             for(const obj of allChessObjects){
                 if(!usedObjects.includes(obj.id)){
-                    npc.queueAction("deleteObject", chessMap, obj.id);
+
+                    //only delete if it's not already deleted
+                    npc.queueAction("deleteObject", [chessMap, obj.id], ()=>npc.game.filterObjectsInMap(chessMap, o=>o.id === obj.id).length > 0);
                 }
             }
         }
